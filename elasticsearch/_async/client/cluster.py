@@ -471,6 +471,62 @@ class ClusterClient(NamespacedClient):
         )
 
     @_rewrite_parameters()
+    async def info(
+        self,
+        *,
+        target: t.Union[
+            t.Union[
+                "t.Literal['_all', 'http', 'ingest', 'script', 'thread_pool']", str
+            ],
+            t.Union[
+                t.List[
+                    t.Union[
+                        "t.Literal['_all', 'http', 'ingest', 'script', 'thread_pool']",
+                        str,
+                    ]
+                ],
+                t.Tuple[
+                    t.Union[
+                        "t.Literal['_all', 'http', 'ingest', 'script', 'thread_pool']",
+                        str,
+                    ],
+                    ...,
+                ],
+            ],
+        ],
+        error_trace: t.Optional[bool] = None,
+        filter_path: t.Optional[
+            t.Union[str, t.Union[t.List[str], t.Tuple[str, ...]]]
+        ] = None,
+        human: t.Optional[bool] = None,
+        pretty: t.Optional[bool] = None,
+    ) -> ObjectApiResponse[t.Any]:
+        """
+        Returns different information about the cluster.
+
+        `<https://www.elastic.co/guide/en/elasticsearch/reference/master/cluster-info.html>`_
+
+        :param target: Limits the information returned to the specific target. Supports
+            a comma-separated list, such as http,ingest.
+        """
+        if target in SKIP_IN_PATH:
+            raise ValueError("Empty value passed for parameter 'target'")
+        __path = f"/_info/{_quote(target)}"
+        __query: t.Dict[str, t.Any] = {}
+        if error_trace is not None:
+            __query["error_trace"] = error_trace
+        if filter_path is not None:
+            __query["filter_path"] = filter_path
+        if human is not None:
+            __query["human"] = human
+        if pretty is not None:
+            __query["pretty"] = pretty
+        __headers = {"accept": "application/json"}
+        return await self.perform_request(  # type: ignore[return-value]
+            "GET", __path, params=__query, headers=__headers
+        )
+
+    @_rewrite_parameters()
     async def pending_tasks(
         self,
         *,
@@ -491,9 +547,11 @@ class ClusterClient(NamespacedClient):
 
         `<https://www.elastic.co/guide/en/elasticsearch/reference/master/cluster-pending.html>`_
 
-        :param local: Return local information, do not retrieve the state from master
-            node (default: false)
-        :param master_timeout: Specify timeout for connection to master
+        :param local: If `true`, the request retrieves information from the local node
+            only. If `false`, information is retrieved from the master node.
+        :param master_timeout: Period to wait for a connection to the master node. If
+            no response is received before the timeout expires, the request fails and
+            returns an error.
         """
         __path = "/_cluster/pending_tasks"
         __query: t.Dict[str, t.Any] = {}
